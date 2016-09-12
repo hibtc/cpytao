@@ -1,0 +1,185 @@
+"""
+Installation script for pytao.
+
+Usage:
+    python setup.py install
+"""
+
+from setuptools import setup, Extension
+from distutils.util import convert_path, get_platform
+from distutils import sysconfig
+
+import sys
+import os
+
+
+# setuptools.Extension automatically converts all '.pyx' extensions to '.c'
+# extensions if detecting that neither Cython nor Pyrex is available. Early
+# versions of setuptools don't know about Cython. Since we don't use Pyrex
+# in this module, this leads to problems in the two cases where Cython is
+# available and Pyrex is not or vice versa. Therefore, setuptools.Extension
+# needs to be patched to match our needs:
+try:
+    # Use Cython if available:
+    from Cython.Build import cythonize
+except ImportError:
+    # Otherwise, always use the distributed .c instead of the .pyx file:
+    def cythonize(extensions):
+        def pyx_to_c(source):
+            return source[:-4]+'.c' if source.endswith('.pyx') else source
+        for ext in extensions:
+            ext.sources = list(map(pyx_to_c, ext.sources))
+            missing_sources = [s for s in ext.sources if not os.path.exists(s)]
+            if missing_sources:
+                raise OSError(('Missing source file: {0[0]!r}. '
+                               'Install Cython to resolve this problem.')
+                              .format(missing_sources))
+        return extensions
+else:
+    orig_Extension = Extension
+    class Extension(orig_Extension):
+        """Extension that *never* replaces '.pyx' by '.c' (using Cython)."""
+        def __init__(self, name, sources, *args, **kwargs):
+            orig_Extension.__init__(self, name, sources, *args, **kwargs)
+            self.sources = sources
+
+
+def main(argv):
+    """Execute setup."""
+    fix_distutils_sysconfig_mingw()
+    setup_args = get_setup_args(sys.argv)
+    setup(**setup_args)
+
+
+def read_file(path):
+    """Read a file in binary mode."""
+    with open(convert_path(path), 'rb') as f:
+        return f.read()
+
+
+def exec_file(path):
+    """Execute a python file and return the `globals` dictionary."""
+    namespace = {}
+    exec(read_file(path), namespace, namespace)
+    return namespace
+
+
+def get_long_description():
+    """Compose a long description for PyPI."""
+    long_description = None
+    try:
+        long_description = read_file('README.rst').decode('utf-8')
+        long_description += '\n' + read_file('COPYING.rst').decode('utf-8')
+        long_description += '\n' + read_file('CHANGES.rst').decode('utf-8')
+    except (IOError, UnicodeDecodeError):
+        pass
+    return long_description
+
+
+def fix_distutils_sysconfig_mingw():
+    """
+    When using windows and MinGW, in distutils.sysconfig the compiler (CC) is
+    not initialized at all, see http://bugs.python.org/issue2437. The
+    following manual fix for this problem may cause other issues, but it's a
+    good shot.
+    """
+    if sysconfig.get_config_var('CC') is None:
+        sysconfig._config_vars['CC'] = 'gcc'
+
+
+def get_setup_args(argv):
+    extension_args = get_extension_args(argv)
+    long_description = get_long_description()
+    metadata = exec_file('pytao/__init__.py')
+    return dict(
+        name='pytao',
+        version=metadata['__version__'],
+        description=metadata['__summary__'],
+        long_description=long_description,
+        author=metadata['__author__'],
+        author_email=metadata['__author_email__'],
+        url=metadata['__uri__'],
+        classifiers=metadata['__classifiers__'],
+        packages = [
+            "pytao",
+        ],
+        ext_modules = cythonize([
+            Extension('pytao.tao_pipe',
+                      sources=["pytao/tao_pipe.pyx"],
+                      **extension_args),
+        ]),
+        install_requires=[
+            'setuptools',
+        ],
+    )
+
+
+def get_extension_args(argv):
+    """Get arguments for C-extension (include pathes, libraries, etc)."""
+    # Let's just use the default system headers:
+    include_dirs = []
+    library_dirs = []
+    # Parse command line option: --bmad-dir=/path/to/bmad_installation. We could
+    # use build_ext.user_options instead, but then the --bmad-dir argument can
+    # be passed only to the 'build_ext' command, not to 'build' or 'install',
+    # which is a minor nuisance.
+    for arg in argv[:]:
+        if arg.startswith('--bmad-dir='):
+            argv.remove(arg)
+            prefix = os.path.expanduser(arg.split('=', 1)[1])
+            lib_path_candidates = [os.path.join(prefix, 'lib'),
+                                   os.path.join(prefix, 'lib64')]
+            include_dirs.append(os.path.join(prefix, 'include'))
+            library_dirs.extend(filter(os.path.isdir, lib_path_candidates))
+    # order matters:
+    internal_libs = [
+        'tao',
+        'bmad',
+        'sim_utils',
+        'forest',
+        'xrlf03',
+        'xrl',
+        'xsif',
+        'fgsl',
+        'gsl',
+        'gslcblas',
+        'recipes_f-90_LEPP',
+        'pgplot',
+        'plplotf77d',
+        'plplotf77cd',
+        'plplotd',
+        'csirocsa',
+        'qsastime',
+        'lapack95',
+        'lapack',
+        'blas',
+    ]
+    external_libs = [
+        'X11',
+        'pangocairo-1.0',
+        'cairo',
+        'readline',
+        'gfortran',
+    ]
+    # required libraries
+    if get_platform() == "win32" or get_platform() == "win-amd64":
+        # TODO: actually try this on windows
+        pass
+    # NOTE: pass 'extra_link_args' in favor of 'libraries' in order to be able
+    # to insert 'static/dynamic' hints.
+    link_args = []
+    link_args += ['-Wl,-Bstatic'] + ['-l'+lib for lib in internal_libs]
+    link_args += ['-Wl,-Bdynamic'] + ['-l'+lib for lib in external_libs]
+    # Common arguments for the Cython extensions:
+    return dict(
+        libraries=[],
+        include_dirs=include_dirs,
+        library_dirs=library_dirs,
+        runtime_library_dirs=library_dirs,
+        extra_link_args=link_args,
+        extra_compile_args=['-std=gnu99'],
+    )
+
+
+if __name__ == '__main__':
+    main(sys.argv)
