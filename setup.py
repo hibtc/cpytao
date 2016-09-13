@@ -114,6 +114,26 @@ def get_setup_args(argv):
     )
 
 
+def remove_arg(args, opt):
+    """
+    Remove all occurences of ``--PARAM=VALUE`` or ``--PARAM VALUE`` from
+    ``args`` and return the corresponding values.
+    """
+    iterargs = iter(args)
+    result = []
+    remain = []
+    for arg in iterargs:
+        if arg == opt:
+            result.append(next(iterargs))
+            continue
+        elif arg.startswith(opt + '='):
+            result.append(arg.split('=', 1)[1])
+            continue
+        remain.append(arg)
+    args[:] = remain
+    return result
+
+
 def get_extension_args(argv):
     """Get arguments for C-extension (include pathes, libraries, etc)."""
     # Let's just use the default system headers:
@@ -123,14 +143,12 @@ def get_extension_args(argv):
     # use build_ext.user_options instead, but then the --bmad-dir argument can
     # be passed only to the 'build_ext' command, not to 'build' or 'install',
     # which is a minor nuisance.
-    for arg in argv[:]:
-        if arg.startswith('--bmad-dir='):
-            argv.remove(arg)
-            prefix = os.path.expanduser(arg.split('=', 1)[1])
-            lib_path_candidates = [os.path.join(prefix, 'lib'),
-                                   os.path.join(prefix, 'lib64')]
-            include_dirs.append(os.path.join(prefix, 'include'))
-            library_dirs.extend(filter(os.path.isdir, lib_path_candidates))
+    for dir_ in remove_arg(argv, '--bmad-dir'):
+        prefix = os.path.expanduser(dir_)
+        lib_path_candidates = [os.path.join(prefix, 'lib'),
+                               os.path.join(prefix, 'lib64')]
+        include_dirs.append(os.path.join(prefix, 'include'))
+        library_dirs.extend(filter(os.path.isdir, lib_path_candidates))
     # order matters:
     internal_libs = [
         'tao',
