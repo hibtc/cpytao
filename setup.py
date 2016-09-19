@@ -110,6 +110,7 @@ def get_setup_args(argv):
         ]),
         install_requires=[
             'setuptools',
+            'minrpc',
         ],
     )
 

@@ -21,7 +21,7 @@ import os
 
 import numpy as np
 
-from cpymad.madx import ChangeDirectory
+from minrpc.util import ChangeDirectory
 
 from . import rpc
 
