@@ -33,7 +33,7 @@ def scratch_n_lines():
     return clib.tao_c_scratch_n_lines()
 
 def scratch_line(i):
-    return clib.tao_c_scratch_line(i).decode('utf-8')
+    return clib.tao_c_scratch_line(i).decode('utf-8', 'replace')
 
 def capture(s):
     """Exec command and return the output string."""
