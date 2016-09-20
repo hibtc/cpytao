@@ -32,12 +32,13 @@ class Tao(object):
     Class for piping in commands to Tao from python and for grabbing Tao output
     """
 
+    # TODO: add function to disable automatic curve recomputation
+
     def __init__(self, *initargs, **Popen_args):
         self._service, self._process = \
             rpc.TaoClient.spawn_subprocess(**Popen_args)
         self.pipe = self._service.tao_pipe
         self.pipe.set_init_args(' '.join(initargs))
-        self._plots = None
 
     # generic functions to access tao
 
@@ -53,7 +54,7 @@ class Tao(object):
         """Execute a python command and get result as list of tuples of strings."""
         self.command('python', *command)
         return [
-            _rstrip(self.pipe.scratch_line(n+1).split(';'))
+            self.pipe.scratch_line(n+1).split(';')
             for n in range(self.pipe.scratch_n_lines())
         ]
 
@@ -67,7 +68,7 @@ class Tao(object):
         :returns: a context manager that can change the directory back
         :rtype: ChangeDirectory
         """
-        # Note, that the libmadx module includes the functions 'getcwd' and
+        # Note, that the tao_pipe module includes the functions 'getcwd' and
         # 'chdir' so it can be used as a valid 'os' module for the purposes
         # of ChangeDirectory:
         return ChangeDirectory(path, self.pipe)
@@ -90,32 +91,35 @@ class Tao(object):
 
     def update(self):
         """Recompute curves in tao."""
-        self._plots = self.properties('plot_template')
+        # TODO: trigger recomputation of curves
+        pass
 
     def plots(self):
-        if self._plots is None:
-            self.update()
-        return self._plots
+        """Return names of available plots."""
+        return self.get_list('plot_list', 't')  # t = templates
 
     def properties(self, *qualname):
         """Get properties as dictionary."""
         return _parse_dict(self.python(*qualname))
 
+    def get_list(self, *qualname):
+        return _parse_list(self.python(*qualname))
+
     def curve_data(self, name):
         """Get a numpy array of (x,y) value pairs for the specified curve."""
-        return _parse_curve(self.python('curve_line', name))
+        return _parse_curve(self.python('plot_line', name))
 
     def curve_names(self, plot):
         """Get the plot specific curve names."""
-        graph = self.plots()[plot]
-        props = self.properties('graph', plot+graph)
-        return [plot+graph+'.'+props[key]
+        graph = self.properties('plot1', plot)['graph[1]']
+        props = self.properties('plot_graph', plot+'.'+graph)
+        return [plot+'.'+graph+'.'+props[key]
                 for key in sorted(props)
                 if key.startswith('curve')]
 
     def plot_data(self, plot):
-        return [(self.properties('graph', curve_name),
-                 self.properties('curve', curve_name),
+        return [(self.properties('plot_graph', curve_name),
+                 self.properties('plot_curve', curve_name),
                  self.curve_data(curve_name))
                 for curve_name in self.curve_names(plot)]
 
@@ -123,6 +127,11 @@ class Tao(object):
         #xlabel = graph_props['x%label']
         #ylabel = graph_props['y%label']
 
+    def get_element_data(self, name):
+        pass
+
+    def get_lattice_elements(self, name):
+        pass
 
 
 def _parse_dict(data):
@@ -130,20 +139,33 @@ def _parse_dict(data):
     Data is a list of strings for the format "name;TYPE;TF;value."
     The function takes in the data and makes a dictionary of each data and it's value
     """
+    if not data or data[0][0] == 'INVALID':
+        return {}
     def parse_dict_item(fields):
         name, kind = fields[:2]
-        if kind == 'STRING':
+        if kind == 'STR':
             value = fields[3]
-        elif kind == 'INTEGER':
+        elif kind == 'INT':
             value = int(fields[3])
         elif kind == 'REAL':
             value = float(fields[3])
-        elif kind == 'LOGICAL':
+        elif kind == 'LOGIC':
             value = fields[3] == 'T'
         else:
             value = fields[1]
         return name, value
     return dict(map(parse_dict_item, data))
+
+
+def _parse_list(data):
+    if not data or data[0][0] == 'INVALID':
+        return []
+    return [v for i, v in data]
+
+
+def as_list(d):
+    """Convert the output of a indexed dict to a list."""
+    return [d[k] for k in sorted(d, key=int)]
 
 
 def _parse_curve(data):
