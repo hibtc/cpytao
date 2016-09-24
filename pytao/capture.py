@@ -36,6 +36,7 @@ class CaptureIO(object):
     def exit(self, *args):
         """Restore to terminal."""
         os.dup2(self.restore, self.fd)
+        os.close(self.restore)
         del self.restore
 
     def __enter__(self):
