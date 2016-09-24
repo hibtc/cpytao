@@ -1,7 +1,5 @@
 # cython: embedsignature=True
 
-from __future__ import print_function
-
 cimport pytao.tao_c_interface_mod as clib
 
 from pytao.capture import capture as _capture
@@ -26,7 +24,6 @@ def set_init_args(s):
     return clib.tao_c_set_init_args(s.encode('utf-8'))
 
 def command(s):
-    print(s, file=sys.stderr)
     return clib.tao_c_command(s.encode('utf-8'))
 
 def scratch_n_lines():
