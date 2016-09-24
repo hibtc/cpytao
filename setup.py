@@ -150,6 +150,26 @@ def get_extension_args(argv):
                                os.path.join(prefix, 'lib64')]
         include_dirs.append(os.path.join(prefix, 'include'))
         library_dirs.extend(filter(os.path.isdir, lib_path_candidates))
+    plot_lib = os.environ.get('ACC_PLOT_PACKAGE')
+    if plot_lib == 'pgplot':
+        plot_libs = ['pgplot']
+        ext_plot_libs = []
+    elif plot_lib == 'plplot':
+        plot_libs = [
+            'plplotf77d',
+            'plplotf77cd',
+            'plplotd',
+            'csirocsa',
+            'qsastime',
+        ]
+        ext_plot_libs = [
+            'pangocairo-1.0',
+            'cairo',
+        ]
+    else:
+        # TODO: $ACC_PLOT_PACKAGE=none to link tao without plot support.
+        raise RuntimeError(
+            "Unknown plot mode. $ACC_PLOT_PACKAGE must be 'plplot' or 'pgplot'.")
     # order matters:
     internal_libs = [
         'tao',
@@ -163,20 +183,14 @@ def get_extension_args(argv):
         'gsl',
         'gslcblas',
         'recipes_f-90_LEPP',
-        'pgplot',
-        'plplotf77d',
-        'plplotf77cd',
-        'plplotd',
-        'csirocsa',
-        'qsastime',
+    ] + plot_libs + [
         'lapack95',
         'lapack',
         'blas',
     ]
     external_libs = [
         'X11',
-        'pangocairo-1.0',
-        'cairo',
+    ] + ext_plot_libs + [
         'readline',
         'gfortran',
     ]
