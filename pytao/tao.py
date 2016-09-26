@@ -17,6 +17,7 @@ Example:
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+
 import os
 
 import numpy as np
@@ -56,7 +57,7 @@ class Tao(object):
 
     def python(self, *command):
         """Execute a python command and get result as list of tuples of strings."""
-        self.command('python', *command)
+        self.command('python', '-noprint', *command)
         return [
             self.pipe.scratch_line(n+1).split(';')
             for n in range(self.pipe.scratch_n_lines())
