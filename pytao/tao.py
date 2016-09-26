@@ -138,6 +138,11 @@ class Tao(object):
             universe, branch, ix_ele, which, who
         ))
 
+    def get_element_floor(self, ix_ele, which='model', universe=1, branch=0):
+        return _parse_array(self.python('lat_ele1 {}@{}>>{}|{} {}'.format(
+            universe, branch, ix_ele, which, 'floor'
+        )))
+
     def get_lattice_elements(self, name):
         pass
 
@@ -184,11 +189,16 @@ def as_list(d):
     return [d[k] for k in sorted(d, key=int)]
 
 
-def _parse_curve(data):
+def _parse_array(data, shape=(0, 0)):
     """Make a numpy array from result of a python command."""
     if not data or data[0][0] == 'INVALID':
-        return np.empty((0, 2))
-    return np.array([tuple(map(float, item[1:3])) for item in data])
+        return np.empty(shape)
+    return np.array([tuple(map(float, row)) for row in data])
+
+
+def _parse_curve(data):
+    """Make a numpy array from result of a python command."""
+    return _parse_array(data, (0, 3))[:,1:]
 
 
 def _rstrip(tup):
