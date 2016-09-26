@@ -26,6 +26,10 @@ from minrpc.util import ChangeDirectory
 from . import rpc
 
 
+def join_args(args):
+    return ' '.join(map(format, args))
+
+
 class Tao(object):
 
     """
@@ -38,17 +42,17 @@ class Tao(object):
         self._service, self._process = \
             rpc.TaoClient.spawn_subprocess(**Popen_args)
         self.pipe = self._service.tao_pipe
-        self.pipe.set_init_args(' '.join(initargs))
+        self.pipe.set_init_args(join_args(initargs))
 
     # generic functions to access tao
 
     def command(self, *command):
         """Send a command to tao without returning the output."""
-        self.pipe.command(' '.join(command))
+        self.pipe.command(join_args(command))
 
     def capture(self, *command):
         """Send a command to Tao and returns the output string."""
-        return self.pipe.capture(' '.join(command))
+        return self.pipe.capture(join_args(command))
 
     def python(self, *command):
         """Execute a python command and get result as list of tuples of strings."""
