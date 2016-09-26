@@ -131,11 +131,22 @@ class Tao(object):
         #xlabel = graph_props['x%label']
         #ylabel = graph_props['y%label']
 
-    def get_element_data(self, name):
-        pass
+    def get_element_data(self, ix_ele, which='model', who='general',
+                         universe=1, branch=0):
+        return self.properties('lat_ele1 {}@{}>>{}|{} {}'.format(
+            universe, branch, ix_ele, which, who
+        ))
 
     def get_lattice_elements(self, name):
         pass
+
+    def change(self, *what, **data):
+        for k, v in data:
+            self.tao.command('change', join_args(what), k, '@', v)
+
+    def set(self, *what, **data):
+        for k, v in data:
+            self.tao.command('set', join_args(what), k, '@', v)
 
 
 def _parse_dict(data):
