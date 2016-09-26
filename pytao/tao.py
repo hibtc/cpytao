@@ -157,7 +157,7 @@ def _parse_dict(data):
             value = fields[3] == 'T'
         else:
             value = fields[1]
-        return name, value
+        return name.lower(), value
     return dict(map(parse_dict_item, data))
 
 
