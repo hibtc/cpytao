@@ -1,2 +1,5 @@
 include README.rst
 include setup.py
+
+include COPYING.rst COPYING.GPLv3.txt
+include pytao/COPYING.txt

@@ -92,7 +92,7 @@ def get_setup_args(argv):
     long_description = get_long_description()
     metadata = exec_file('pytao/__init__.py')
     return dict(
-        name='pytao',
+        name=metadata['__title__'],
         version=metadata['__version__'],
         description=metadata['__summary__'],
         long_description=long_description,
@@ -112,6 +112,11 @@ def get_setup_args(argv):
             'setuptools',
             'minrpc',
         ],
+        package_data={
+            'pytao': [
+                'COPYING.txt'
+            ]
+        }
     )
 
 
