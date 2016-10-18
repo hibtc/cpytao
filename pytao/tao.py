@@ -19,6 +19,7 @@ from __future__ import unicode_literals
 
 
 import os
+import re
 
 import numpy as np
 
@@ -116,11 +117,13 @@ class Tao(object):
 
     def curve_names(self, plot):
         """Get the plot specific curve names."""
-        graph = self.properties('plot1', plot)['graph[1]']
-        props = self.properties('plot_graph', plot+'.'+graph)
-        return [plot+'.'+graph+'.'+props[key]
-                for key in sorted(props)
-                if key.startswith('curve')]
+        props = self.properties
+        return [
+            plot+'.'+graph+'.'+curve
+            for graph in props('plot1', plot).get('graph', [])
+            if graph
+            for curve in props('plot_graph', plot+'.'+graph).get('curve', [])
+        ]
 
     def plot_data(self, plot):
         return [(self.properties('plot_graph', curve_name),
@@ -175,7 +178,49 @@ def _parse_dict(data):
         else:
             value = fields[1]
         return name.lower(), value
-    return dict(map(parse_dict_item, data))
+    return _convert_arrays(map(parse_dict_item, data))
+
+
+RE_ARRAY = re.compile(r'^(.*)\[(\d+)\]$')
+
+def _convert_arrays(items):
+    """
+    Convert sequential data in properties to lists.
+
+    The command
+
+        Tao> python plot_graph beta.g
+
+    contains the items
+
+        (num_curves, 2)
+        (curve[1], a)
+        (curve[2], b)
+
+    which will be transformed to a single item:
+
+        (curve, [a, b])
+    """
+    result = {}
+    arrays = set()
+    for key, val in items:
+        m = RE_ARRAY.match(key)
+        if m:
+            name, index = m.groups()
+            l = result.setdefault(name, [])
+            l.append(val)
+            arrays.add(name)
+            if int(index) != len(l):
+                raise ValueError("Got index {}, expected {}."
+                                 .format(index, len(l)))
+        else:
+            result[key] = val
+    for name in arrays:
+        count = int(result.pop('num_'+name+'s', 0))
+        if count != len(result[name]):
+            raise ValueError("Inconsistent array length: adverised as {}, got only {} items."
+                             .format(count, len(result[name])))
+    return result
 
 
 def _parse_list(data):
