@@ -104,6 +104,19 @@ class Tao(object):
         """Return names of available plots."""
         return self.get_list('plot_list', 't')  # t = templates
 
+    def valid_graphs(self):
+        return [
+            (graph_path, {'plot': plot_info,
+                          'graph': graph_info})
+            for plot_name  in self.plots()
+            for plot_info  in [self.properties('plot1', plot_name)]
+            for graph_name in plot_info.get('graph', [])
+            if  graph_name
+            for graph_path in [plot_name + '.' + graph_name]
+            for graph_info in [self.properties('plot_graph', graph_path)]
+            if  graph_info.get('valid')
+        ]
+
     def properties(self, *qualname):
         """Get properties as dictionary."""
         return _parse_dict(self.python(*qualname))
