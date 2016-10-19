@@ -210,16 +210,19 @@ def _convert_arrays(items):
             l = result.setdefault(name, [])
             l.append(val)
             arrays.add(name)
-            if int(index) != len(l):
-                raise ValueError("Got index {}, expected {}."
-                                 .format(index, len(l)))
+            # consistency check:
+            # (can't use this because tao is inconsistent with indexing)
+            # if int(index) != len(l):
+            #     raise ValueError("Got index {}, expected {}."
+            #                      .format(index, len(l)))
         else:
             result[key] = val
     for name in arrays:
         count = int(result.pop('num_'+name+'s', 0))
-        if count != len(result[name]):
-            raise ValueError("Inconsistent array length: adverised as {}, got only {} items."
-                             .format(count, len(result[name])))
+        # consistency check:
+        # if count != len(result[name]):
+        #     raise ValueError("Inconsistent array length: adverised as {}, got only {} items."
+        #                      .format(count, len(result[name])))
     return result
 
 
