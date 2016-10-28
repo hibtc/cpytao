@@ -111,10 +111,10 @@ class Tao(object):
             for plot_name  in self.plots()
             for plot_info  in [self.properties('plot1', plot_name)]
             for graph_name in plot_info.get('graph', [])
-            if  graph_name
             for graph_path in [plot_name + '.' + graph_name]
             for graph_info in [self.properties('plot_graph', graph_path)]
-            if  graph_info.get('valid')
+            if graph_info.get('curve', [])
+            # if  graph_info.get('valid')
         ]
 
     def properties(self, *qualname):
