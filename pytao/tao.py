@@ -142,7 +142,6 @@ class Tao(object):
         return [
             plot+'.'+graph+'.'+curve
             for graph in props('plot1', plot).get('graph', [])
-            if graph
             for curve in props('plot_graph', plot+'.'+graph).get('curve', [])
         ]
 

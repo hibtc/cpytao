@@ -42,6 +42,8 @@ Before running pytao, if you want to access the tao help system, set the
 Usage
 -----
 
+Basic commands:
+
 .. code-block:: python
 
     from pytao.tao import Tao
@@ -53,10 +55,23 @@ Usage
     print(output)                       # Get the stdout of command
 
     result = tao.python('help')         # Issue a Tao python command.
-    print(data)
+    print(result)
+
+    # parse output of the `Tao> python plot_graph beta.g` command as
+    # dictionary:
+    properties = tao.properties('plot_graph', 'beta.g')
+    print(properties['title'])
 
 
+Some more specialized methods are available, e.g. ``curve_names`` or
+``curve_data`` as shown here:
+
+.. code-block:: python
+
+    from pytao.tao import Tao
     import matplotlib.pyplot as plt
+
+    tao = Tao('-lat my_lat.bmad')       # Init with standard command-line switches
 
     for curve in tao.curve_names('beta'):
         x, y = tao.curve_data(curve).T
@@ -64,3 +79,7 @@ Usage
 
     plt.legend(loc='upper left')
     plt.show()
+
+
+For more information, it's best you browse the source code, as its changing
+quickly.
