@@ -20,12 +20,16 @@ from __future__ import unicode_literals
 
 import os
 import re
+from collections import OrderedDict, namedtuple
 
 import numpy as np
 
 from minrpc.util import ChangeDirectory
 
 from . import rpc
+
+
+Parameter = namedtuple('Parameter', ['name', 'value', 'vary'])
 
 
 def join_args(args):
@@ -121,6 +125,10 @@ class Tao(object):
         """Get properties as dictionary."""
         return _parse_dict(self.python(*qualname))
 
+    def parameters(self, *qualname):
+        """Get properties as a dictionary of `Parameter`s."""
+        return _parse_param_dict(self.python(*qualname))
+
     def get_list(self, *qualname):
         return _parse_list(self.python(*qualname))
 
@@ -177,21 +185,38 @@ def _parse_dict(data):
     The function takes in the data and makes a dictionary of each data and it's value
     """
     if not data or data[0][0] == 'INVALID':
-        return {}
-    def parse_dict_item(fields):
-        name, kind = fields[:2]
-        if kind == 'STR':
-            value = fields[3]
-        elif kind == 'INT':
-            value = int(fields[3])
-        elif kind == 'REAL':
-            value = float(fields[3])
-        elif kind == 'LOGIC':
-            value = fields[3] == 'T'
-        else:
-            value = fields[1]
-        return name.lower(), value
-    return _convert_arrays(map(parse_dict_item, data))
+        return OrderedDict()
+    return _convert_arrays(map(_parse_dict_item, data))
+
+
+def _parse_dict_item(fields):
+    name, kind = fields[:2]
+    if kind == 'STR':
+        value = fields[3]
+    elif kind == 'INT':
+        value = int(fields[3])
+    elif kind == 'REAL':
+        value = float(fields[3])
+    elif kind == 'LOGIC':
+        value = fields[3] == 'T'
+    else:
+        value = fields[1]
+    return name.lower(), value
+
+
+def _parse_param_dict(data):
+    if not data or data[0][0] == 'INVALID':
+        return OrderedDict()
+    # TODO: what to do for lists?
+    # - currently converted to: [Parameter]
+    # - should it be rather: Parameter([])?
+    return _convert_arrays(map(_parse_param, data))
+
+
+def _parse_param(fields):
+    key, value = _parse_dict_item(fields)
+    vary = fields[2] == 'T'
+    return key, Parameter(key, value, vary)
 
 
 RE_ARRAY = re.compile(r'^(.*)\[(\d+)\]$')
@@ -214,7 +239,7 @@ def _convert_arrays(items):
 
         (curve, [a, b])
     """
-    result = {}
+    result = OrderedDict()
     arrays = set()
     for key, val in items:
         m = RE_ARRAY.match(key)
