@@ -175,7 +175,7 @@ class Tao(object):
 
     def set(self, *what, **data):
         for k, v in data:
-            self.tao.command('set', join_args(what), k, '@', v)
+            self.tao.command('set', join_args(what), k, '=', v)
 
 
 def _parse_dict(data):
