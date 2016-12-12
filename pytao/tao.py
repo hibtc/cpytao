@@ -170,12 +170,12 @@ class Tao(object):
         pass
 
     def change(self, *what, **data):
-        for k, v in data:
-            self.tao.command('change', join_args(what), k, '@', v)
+        for k, v in data.items():
+            self.command('change', join_args(what), k, '@', v)
 
     def set(self, *what, **data):
-        for k, v in data:
-            self.tao.command('set', join_args(what), k, '=', v)
+        for k, v in data.items():
+            self.command('set', join_args(what), k, '=', v)
 
 
 def _parse_dict(data):
