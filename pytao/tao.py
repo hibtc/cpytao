@@ -59,12 +59,18 @@ class Tao(object):
 
     # generic functions to access tao
 
+    debug = False
+
     def command(self, *command):
         """Send a command to tao without returning the output."""
+        if self.debug:
+            print("command: " + join_args(command))
         self.pipe.command(join_args(command))
 
     def capture(self, *command):
         """Send a command to Tao and returns the output string."""
+        if self.debug:
+            print("capture: " + join_args(command))
         return self.pipe.capture(join_args(command))
 
     def python(self, *command):
