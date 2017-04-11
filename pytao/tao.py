@@ -58,6 +58,7 @@ class Tao(object):
     # TODO: add function to disable automatic curve recomputation
 
     def __init__(self, *initargs, **Popen_args):
+        self.debug = Popen_args.pop('debug', False)
         # stdin=None leads to an error on windows when STDIN is broken.
         # Therefore, we need set stdin=os.devnull by passing stdin=False:
         Popen_args.setdefault('stdin', False)
@@ -70,8 +71,6 @@ class Tao(object):
         self.command('place * none')
 
     # generic functions to access tao
-
-    debug = False
 
     def command(self, *command):
         """Send a command to tao without returning the output."""
