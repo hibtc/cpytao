@@ -36,6 +36,14 @@ __all__ = [
 ]
 
 
+PARAM_PLACE = {
+    # keys according to `who` in `lat_ele1`:
+    'parameters':  'element beginning',
+    'twiss':       'element beginning',
+    'orbit':       'beam_start',
+}
+
+
 Parameter = namedtuple('Parameter', ['name', 'value', 'vary'])
 
 
@@ -200,6 +208,9 @@ class Tao(object):
     def set(self, *what, **data):
         for k, v in data.items():
             self.command('set', join_args(what), k, '=', v)
+
+    def set_param(self, kind, **kwargs):
+        self.change(PARAM_PLACE[kind], **kwargs)
 
 
 def _parse_dict(data):
