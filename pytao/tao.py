@@ -34,7 +34,6 @@ Parameter = namedtuple('Parameter', ['name', 'value', 'vary'])
 
 def format_val(value):
     if isinstance(value, float):
-        print("floating")
         return format(value, '.15e')
     return format(value)
 
