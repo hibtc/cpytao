@@ -24,9 +24,16 @@ from collections import OrderedDict, namedtuple
 
 import numpy as np
 
-from minrpc.util import ChangeDirectory
 
-from . import rpc
+from minrpc.util import ChangeDirectory
+from minrpc.client import Client, RemoteProcessCrashed, RemoteProcessClosed
+
+
+__all__ = [
+    'Tao',
+    'RemoteProcessCrashed',
+    'RemoteProcessClosed',
+]
 
 
 Parameter = namedtuple('Parameter', ['name', 'value', 'vary'])
@@ -52,8 +59,8 @@ class Tao(object):
 
     def __init__(self, *initargs, **Popen_args):
         self._service, self._process = \
-            rpc.TaoClient.spawn_subprocess(**Popen_args)
-        self.pipe = self._service.tao_pipe
+            Client.spawn_subprocess(**Popen_args)
+        self.pipe = self._service.modules['pytao.tao_pipe']
         self.pipe.set_init_args(join_args(initargs))
 
     # generic functions to access tao
