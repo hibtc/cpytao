@@ -58,6 +58,10 @@ class Tao(object):
     # TODO: add function to disable automatic curve recomputation
 
     def __init__(self, *initargs, **Popen_args):
+        # stdin=None leads to an error on windows when STDIN is broken.
+        # Therefore, we need set stdin=os.devnull by passing stdin=False:
+        Popen_args.setdefault('stdin', False)
+        Popen_args.setdefault('bufsize', 0)
         self._service, self._process = \
             Client.spawn_subprocess(**Popen_args)
         self.pipe = self._service.modules['pytao.tao_pipe']
