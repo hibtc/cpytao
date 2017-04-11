@@ -62,6 +62,8 @@ class Tao(object):
             Client.spawn_subprocess(**Popen_args)
         self.pipe = self._service.modules['pytao.tao_pipe']
         self.pipe.set_init_args(join_args(initargs))
+        self.set('global', lattice_calc_on='F')
+        self.command('place * none')
 
     # generic functions to access tao
 
@@ -120,8 +122,8 @@ class Tao(object):
 
     def update(self):
         """Recompute curves in tao."""
-        # TODO: trigger recomputation of curves
-        pass
+        self.set('global', lattice_calc_on='T')
+        self.set('global', lattice_calc_on='F')
 
     def plots(self):
         """Return names of available plots."""
