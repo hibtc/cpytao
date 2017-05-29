@@ -131,11 +131,10 @@ def remove_arg(args, opt):
     for arg in iterargs:
         if arg == opt:
             result.append(next(iterargs))
-            continue
         elif arg.startswith(opt + '='):
             result.append(arg.split('=', 1)[1])
-            continue
-        remain.append(arg)
+        else:
+            remain.append(arg)
     args[:] = remain
     return result
 
@@ -171,10 +170,12 @@ def get_extension_args(argv):
             'pangocairo-1.0',
             'cairo',
         ]
+    elif plot_lib == 'none':
+        plot_libs = []
+        ext_plot_libs = []
     else:
-        # TODO: $ACC_PLOT_PACKAGE=none to link tao without plot support.
         raise RuntimeError(
-            "Unknown plot mode. $ACC_PLOT_PACKAGE must be 'plplot' or 'pgplot'.")
+            "Unknown plot mode. $ACC_PLOT_PACKAGE must be 'plplot', 'pgplot' or 'none'.")
     # order matters:
     internal_libs = [
         'tao',
