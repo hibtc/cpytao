@@ -161,9 +161,9 @@ def get_extension_args(argv):
         ext_plot_libs = []
     elif plot_lib == 'plplot':
         plot_libs = [
-            'plplotf77d',
-            'plplotf77cd',
-            'plplotd',
+            'plplotcxx',
+            'plplotf95',
+            'plplot',
             'csirocsa',
             'qsastime',
         ]
