@@ -148,7 +148,11 @@ def get_extension_args(argv):
     # use build_ext.user_options instead, but then the --bmad-dir argument can
     # be passed only to the 'build_ext' command, not to 'build' or 'install',
     # which is a minor nuisance.
-    bmad_dir, = remove_arg(argv, '--bmad-dir')
+    base_dir = os.environ['DIST_BASE_DIR']
+    fallback = [os.path.join(base_dir, 'production'),
+                os.path.join(base_dir, 'debug')]
+    fallback = list(filter(os.path.isdir, fallback))
+    bmad_dir, = remove_arg(argv, '--bmad-dir') or [fallback[0]]
     bmad_dir = prefix = os.path.expanduser(bmad_dir)
     lib_path_candidates = [os.path.join(prefix, 'lib'),
                            os.path.join(prefix, 'lib64')]
