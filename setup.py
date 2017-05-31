@@ -148,12 +148,12 @@ def get_extension_args(argv):
     # use build_ext.user_options instead, but then the --bmad-dir argument can
     # be passed only to the 'build_ext' command, not to 'build' or 'install',
     # which is a minor nuisance.
-    for dir_ in remove_arg(argv, '--bmad-dir'):
-        prefix = os.path.expanduser(dir_)
-        lib_path_candidates = [os.path.join(prefix, 'lib'),
-                               os.path.join(prefix, 'lib64')]
-        include_dirs.append(os.path.join(prefix, 'include'))
-        library_dirs.extend(filter(os.path.isdir, lib_path_candidates))
+    bmad_dir, = remove_arg(argv, '--bmad-dir')
+    bmad_dir = prefix = os.path.expanduser(bmad_dir)
+    lib_path_candidates = [os.path.join(prefix, 'lib'),
+                           os.path.join(prefix, 'lib64')]
+    include_dirs.append(os.path.join(prefix, 'include'))
+    library_dirs.extend(filter(os.path.isdir, lib_path_candidates))
     plot_lib = os.environ.get('ACC_PLOT_PACKAGE')
     if plot_lib == 'pgplot':
         plot_libs = ['pgplot']
@@ -206,9 +206,12 @@ def get_extension_args(argv):
         pass
     # NOTE: pass 'extra_link_args' in favor of 'libraries' in order to be able
     # to insert 'static/dynamic' hints.
+    # NOTE: Apple's clang linker doesn't support mixing static/dynamic linking
+    # using `-Bdynamic`, `-Bstatic` hints, therefore we have to specify the
+    # full pathname:
     link_args = []
-    link_args += ['-Wl,-Bstatic'] + ['-l'+lib for lib in internal_libs]
-    link_args += ['-Wl,-Bdynamic'] + ['-l'+lib for lib in external_libs]
+    link_args += [os.path.join(bmad_dir, 'lib', 'lib'+lib+'.a') for lib in internal_libs]
+    link_args += ['-l'+lib for lib in external_libs]
     # Common arguments for the Cython extensions:
     return dict(
         libraries=[],
