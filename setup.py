@@ -161,7 +161,7 @@ def get_extension_args(argv):
     plot_lib = os.environ.get('ACC_PLOT_PACKAGE')
     if plot_lib == 'pgplot':
         plot_libs = ['pgplot']
-        ext_plot_libs = []
+        ext_plot_libs = ['X11']
     elif plot_lib == 'plplot':
         plot_libs = [
             'plplotcxx',
@@ -173,6 +173,7 @@ def get_extension_args(argv):
         ext_plot_libs = [
             'pangocairo-1.0',
             'cairo',
+            'X11',
         ]
     elif plot_lib == 'none':
         plot_libs = []
@@ -198,9 +199,7 @@ def get_extension_args(argv):
         'lapack',
         'blas',
     ]
-    external_libs = [
-        'X11',
-    ] + ext_plot_libs + [
+    external_libs = ext_plot_libs + [
         'readline',
         'gfortran',
     ]
