@@ -1,0 +1,25 @@
+parameter[particle] = #12C+6
+parameter[geometry] = open
+
+beginning[e_tot]    = 400e+9
+
+beginning[beta_a]   = 44
+beginning[beta_b]   = 4
+beginning[alpha_a]  = -7
+beginning[alpha_b]  = -1
+
+beam_start[x]       = 0
+beam_start[px]      = 0
+beam_start[y]       = 0
+beam_start[py]      = 0
+
+
+dr0:  drift, l = 0.5
+qp1:  quadrupole, l = 1, k1 = -0.1
+dr1:  drift, l = 0.5
+bb: sbend, l = 2, angle = 1
+qp2:  quadrupole, l = 1, k1 = 0.1
+dr2:  drift, l = 0.5
+
+seq: line = (dr0, qp1, dr1, bb, dr1, qp2, dr1)
+use, seq
