@@ -155,11 +155,11 @@ class Tao(object):
 
     def properties(self, *qualname):
         """Get properties as dictionary."""
-        return _parse_dict(self.python(*qualname))
+        return self._parse_dict(self.python(*qualname))
 
     def parameters(self, *qualname):
         """Get properties as a dictionary of `Parameter`s."""
-        return _parse_param_dict(self.python(*qualname))
+        return self._parse_param_dict(self.python(*qualname))
 
     def get_list(self, *qualname):
         return _parse_list(self.python(*qualname))
@@ -240,20 +240,18 @@ class Tao(object):
     def _create_enum_value(self, name, value):
         return value
 
+    def _parse_param_dict(self, data):
+        if not data or data[0][0] == 'INVALID':
+            return OrderedDict()
+        # TODO: what to do for lists?
+        # - currently converted to: [Parameter]
+        # - should it be rather: Parameter([])?
+        return _convert_arrays(map(self._parse_param, data))
 
-def _parse_param_dict(data):
-    if not data or data[0][0] == 'INVALID':
-        return OrderedDict()
-    # TODO: what to do for lists?
-    # - currently converted to: [Parameter]
-    # - should it be rather: Parameter([])?
-    return _convert_arrays(map(_parse_param, data))
-
-
-def _parse_param(fields):
-    key, value = _parse_dict_item(fields)
-    vary = fields[2] == 'T'
-    return key, Parameter(key, value, vary)
+    def _parse_param(self, fields):
+        key, value = _parse_dict_item(fields)
+        vary = fields[2] == 'T'
+        return key, Parameter(key, value, vary)
 
 
 RE_ARRAY = re.compile(r'^(.*)\[(\d+)\]$')
