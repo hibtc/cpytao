@@ -232,7 +232,7 @@ class Tao(object):
         elif kind == 'LOGIC':
             value = fields[3] == 'T'
         elif kind == 'ENUM':
-            value = self._create_enum_value(name, value)
+            value = self._create_enum_value(name, fields[3])
         else:
             value = fields[1]
         return name.lower(), value
@@ -249,7 +249,7 @@ class Tao(object):
         return _convert_arrays(map(self._parse_param, data))
 
     def _parse_param(self, fields):
-        key, value = _parse_dict_item(fields)
+        key, value = self._parse_dict_item(fields)
         vary = fields[2] == 'T'
         return key, Parameter(key, value, vary)
 
