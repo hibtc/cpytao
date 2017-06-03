@@ -212,30 +212,33 @@ class Tao(object):
     def set_param(self, kind, **kwargs):
         self.change(PARAM_PLACE[kind], **kwargs)
 
+    def _parse_dict(self, data):
+        """
+        Data is a list of strings for the format "name;TYPE;TF;value."
+        The function takes in the data and makes a dictionary of each data and it's value
+        """
+        if not data or data[0][0] == 'INVALID':
+            return OrderedDict()
+        return _convert_arrays(map(self._parse_dict_item, data))
 
-def _parse_dict(data):
-    """
-    Data is a list of strings for the format "name;TYPE;TF;value."
-    The function takes in the data and makes a dictionary of each data and it's value
-    """
-    if not data or data[0][0] == 'INVALID':
-        return OrderedDict()
-    return _convert_arrays(map(_parse_dict_item, data))
+    def _parse_dict_item(self, fields):
+        name, kind = fields[:2]
+        if kind == 'STR':
+            value = fields[3]
+        elif kind == 'INT':
+            value = int(fields[3])
+        elif kind == 'REAL':
+            value = float(fields[3])
+        elif kind == 'LOGIC':
+            value = fields[3] == 'T'
+        elif kind == 'ENUM':
+            value = self._create_enum_value(name, value)
+        else:
+            value = fields[1]
+        return name.lower(), value
 
-
-def _parse_dict_item(fields):
-    name, kind = fields[:2]
-    if kind == 'STR':
-        value = fields[3]
-    elif kind == 'INT':
-        value = int(fields[3])
-    elif kind == 'REAL':
-        value = float(fields[3])
-    elif kind == 'LOGIC':
-        value = fields[3] == 'T'
-    else:
-        value = fields[1]
-    return name.lower(), value
+    def _create_enum_value(self, name, value):
+        return value
 
 
 def _parse_param_dict(data):
