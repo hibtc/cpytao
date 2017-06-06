@@ -276,6 +276,7 @@ def _convert_arrays(items):
     """
     result = OrderedDict()
     arrays = set()
+    i0 = {}
     for key, val in items:
         m = RE_ARRAY.match(key)
         if m:
@@ -284,18 +285,23 @@ def _convert_arrays(items):
             l.append(val)
             arrays.add(name)
             # consistency check:
-            # (can't use this because tao is inconsistent with indexing)
-            # if int(index) != len(l):
-            #     raise ValueError("Got index {}, expected {}."
-            #                      .format(index, len(l)))
+            if len(l) == 1:
+                i0[name] = int(index)
+            elif int(index) != len(l):
+                raise ValueError(
+                    "Inconsistent array: Got index {}, expected {}.\n"
+                    "Please report this at https://github.com/hibtc/pytao/issues."
+                    .format(index, len(l)))
         else:
             result[key] = val
     for name in arrays:
         count = int(result.pop('num_'+name+'s', 0))
         # consistency check:
-        # if count != len(result[name]):
-        #     raise ValueError("Inconsistent array length: adverised as {}, got only {} items."
-        #                      .format(count, len(result[name])))
+        if count != len(result[name]):
+            raise ValueError(
+                "Inconsistent array length: adverised as {}, got only {} items.\n"
+                "Please report this at https://github.com/hibtc/pytao/issues."
+                .format(count, len(result[name])))
     return result
 
 
