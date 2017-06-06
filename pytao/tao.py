@@ -20,7 +20,15 @@ from __future__ import unicode_literals
 
 import os
 import re
-from collections import OrderedDict, namedtuple
+import sys
+from collections import namedtuple
+
+# dictionary type that preserves insertion order if not deleting an element.
+# (this is technically just an implementation detail of CPython 3.6)
+if sys.version_info >= (3, 6):
+    OrderedDict = dict
+else:
+    from collections import OrderedDict
 
 import numpy as np
 
