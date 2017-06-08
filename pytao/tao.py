@@ -68,12 +68,38 @@ def join_args(args):
 class Tao(object):
 
     """
-    Class for piping in commands to Tao from python and for grabbing Tao output
+    Class for piping in commands to Tao from python and for grabbing Tao output.
+
+    For now, you should only be using lower level methods to execute tao
+    primitive commands or tao python commands.
+
+    For reference of the python commands, see `tao/code/tao_python.f90` in the
+    bmad source distribution and try them out yourself!
+
+    The most useful methods are, in that order:
+
+        - :meth:`Tao.command`
+        - :meth:`Tao.python`
+        - :meth:`Tao.get_list`
+        - :meth:`Tao.properties`
+        - :meth:`Tao.parameters`
     """
 
     # TODO: add function to disable automatic curve recomputation
 
     def __init__(self, *initargs, **Popen_args):
+        """
+        Initialize new tao process.
+
+            :param initargs: command line arguments for tao
+            :param Popen_args: arguments for :func:`subprocess.Popen`.
+
+        The ``initargs`` will automatically be concatenated using white
+        spaces, for example, the following two lines are equivalent:
+
+            >>> tao = Tao("-lat girder.lat")
+            >>> tao = Tao("-lat", "girder.lat")
+        """
         self.debug = Popen_args.pop('debug', False)
         # stdin=None leads to an error on windows when STDIN is broken.
         # Therefore, we need set stdin=os.devnull by passing stdin=False:
@@ -86,10 +112,27 @@ class Tao(object):
         self.set('global', lattice_calc_on='F')
         self.command('place * none')
 
-    # generic functions to access tao
+    # generic functions to access tao, please use these:
 
     def command(self, *command):
-        """Send a command to tao without returning the output."""
+        """
+        Send a command to tao without returning the output.
+
+        For example:
+
+            >>> tao.command("set element bb k1 = 1")
+            >>> tao.command("python lat_ele_list 1@0") # (Whoopsie, no output!)
+
+        If you want to retrieve output from a python command, see
+        :meth:`Tao.python` instead.
+
+        Multiple arguments are automatically concatenated using whitespaces,
+        so the following commands are all equivalent:
+
+            >>> tao.command("set element bb k1 = 1")
+            >>> tao.command("set element {} {} = {}".format("bb", "k1", 1))
+            >>> tao.command("set", "element", "bb", "k1", "=", 1)
+        """
         if self.debug:
             print("command: " + join_args(command))
         self.pipe.command(join_args(command))
@@ -101,7 +144,29 @@ class Tao(object):
         return self.pipe.capture(join_args(command))
 
     def python(self, *command):
-        """Execute a python command and get result as list of tuples of strings."""
+        """
+        Execute a python command and get result as list of tuples of strings.
+
+            >>> tao.python("lat_ele_list 1@0")
+            [[u'0', u'BEGINNING'],
+             [u'1', u'BB'],
+             [u'2', u'END'],
+             [u'3', u'OO']]
+
+            >>> tao.python("lat_ele1 1@0>>0|model twiss")
+            [[u'beta_a', u'REAL', u'T', u'  4.4000000000000000E+01'],
+             [u'alpha_a', u'REAL', u'T', u' -7.0000000000000000E+00'],
+             [u'gamma_a', u'REAL', u'F', u'  1.1363636363636365E+00'],
+             ...,
+             [u'etap_b', u'REAL', u'T', u'  0.0000000000000000E+00']]
+
+        This only splits the lines and columns of the output into lists, but
+        there is no parsing of data types. You get the full info returned from
+        the tao python command.
+
+        For many python commands, it may be more convenient to use
+        :meth:`Tao.get_list` or :meth:`Tao.properties` instead.
+        """
         self.command('python', '-noprint', *command)
         return [
             self.pipe.scratch_line(n+1).split(';')
@@ -162,14 +227,55 @@ class Tao(object):
         ]
 
     def properties(self, *qualname):
-        """Get properties as dictionary."""
+        """
+        Get properties as dictionary.
+
+        Like :meth:`Tao.python` but more useful for dicts:
+
+            >>> tao.properties("lat_ele1 1@0>>0|model twiss")
+            {'beta_a': 44.0,
+            u'alpha_a': -7.0,
+            u'gamma_a': 1.1363636363636365,
+            ...,
+            u'etap_b': 0.0}
+
+        This adds a lot of convenience over :meth:`Tao.python`, but can just
+        be used for those python commands that return dictionary like
+        structures. Note that this doesn't return the "vary" T/F flag.
+
+        (There is also :meth:`Tao.parameters` that works similar to
+        :meth:`Tao.properties` but returns a dictionary of :class:`Parameter`
+        instead - which knows about the `vary` flag.)
+        """
         return self._parse_dict(self.python(*qualname))
 
     def parameters(self, *qualname):
-        """Get properties as a dictionary of `Parameter`s."""
+        """
+        Get properties as a dictionary of :class:`Parameter`s.
+
+        Similar to :meth:`Tao.properties` but returns dictionary of
+        :meth:`Parameter`:
+
+            >>> params = tao.params("lat_ele1 1@0>>0|model twiss")
+            >>> param['beta_a']
+            Parameter(name=u'beta_a', value=44.0, vary=True)
+            >>> param['beta_a'].vary
+            True
+        """
         return self._parse_param_dict(self.python(*qualname))
 
     def get_list(self, *qualname):
+        """
+        Execute python command and return result as list of strings.
+
+        Similar to :meth:`Tao.python` but avoids the extra index column:
+
+            >>> tao.get_list("lat_ele_list 1@0")
+            [u'BEGINNING', u'BB', u'END', u'OO']
+
+        This is often a bit more convenient than :meth:`Tao.python`, but can
+        be used only for python commands that return list-like structure.
+        """
         return _parse_list(self.python(*qualname))
 
     def curve_data(self, name):
@@ -219,6 +325,8 @@ class Tao(object):
 
     def set_param(self, kind, **kwargs):
         self.change(PARAM_PLACE[kind], **kwargs)
+
+    # internal only, do not use:
 
     def _parse_dict(self, data):
         """
