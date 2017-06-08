@@ -173,58 +173,21 @@ class Tao(object):
             for n in range(self.pipe.scratch_n_lines())
         ]
 
-    # specialized commands:
+    # Convenience methods for getting info from python commands:
 
-    def chdir(self, path):
+    def get_list(self, *qualname):
         """
-        Change the directory. Can be used as context manager.
+        Execute python command and return result as list of strings.
 
-        :param str path: new path name
-        :returns: a context manager that can change the directory back
-        :rtype: ChangeDirectory
+        Similar to :meth:`Tao.python` but avoids the extra index column:
+
+            >>> tao.get_list("lat_ele_list 1@0")
+            [u'BEGINNING', u'BB', u'END', u'OO']
+
+        This is often a bit more convenient than :meth:`Tao.python`, but can
+        be used only for python commands that return list-like structure.
         """
-        # Note, that the tao_pipe module includes the functions 'getcwd' and
-        # 'chdir' so it can be used as a valid 'os' module for the purposes
-        # of ChangeDirectory:
-        return ChangeDirectory(path, self.pipe)
-
-    def read(self, filename, chdir=False):
-        """
-        READ a lattice file.
-
-        :param str filename: file name with path
-        :param bool chdir: temporarily change directory in Bmad process
-        """
-        if chdir:
-            dirname, basename = os.path.split(filename)
-            with self.chdir(dirname):
-                self.command('read', 'lattice', basename)
-        else:
-            self.command('read', 'lattice', filename)
-
-    # Various functions for getting information from Tao
-
-    def update(self):
-        """Recompute curves in tao."""
-        self.set('global', lattice_calc_on='T')
-        self.set('global', lattice_calc_on='F')
-
-    def plots(self):
-        """Return names of available plots."""
-        return self.get_list('plot_list', 't')  # t = templates
-
-    def valid_graphs(self):
-        return [
-            (graph_path, {'plot': plot_info,
-                          'graph': graph_info})
-            for plot_name  in self.plots()
-            for plot_info  in [self.properties('plot1', plot_name)]
-            for graph_name in plot_info.get('graph', [])
-            for graph_path in [plot_name + '.' + graph_name]
-            for graph_info in [self.properties('plot_graph', graph_path)]
-            if graph_info.get('curve', [])
-            # if  graph_info.get('valid')
-        ]
+        return _parse_list(self.python(*qualname))
 
     def properties(self, *qualname):
         """
@@ -264,19 +227,59 @@ class Tao(object):
         """
         return self._parse_param_dict(self.python(*qualname))
 
-    def get_list(self, *qualname):
+    # specialized commands:
+
+    def chdir(self, path):
         """
-        Execute python command and return result as list of strings.
+        Change the directory. Can be used as context manager.
 
-        Similar to :meth:`Tao.python` but avoids the extra index column:
-
-            >>> tao.get_list("lat_ele_list 1@0")
-            [u'BEGINNING', u'BB', u'END', u'OO']
-
-        This is often a bit more convenient than :meth:`Tao.python`, but can
-        be used only for python commands that return list-like structure.
+        :param str path: new path name
+        :returns: a context manager that can change the directory back
+        :rtype: ChangeDirectory
         """
-        return _parse_list(self.python(*qualname))
+        # Note, that the tao_pipe module includes the functions 'getcwd' and
+        # 'chdir' so it can be used as a valid 'os' module for the purposes
+        # of ChangeDirectory:
+        return ChangeDirectory(path, self.pipe)
+
+    def read(self, filename, chdir=False):
+        """
+        READ a lattice file.
+
+        :param str filename: file name with path
+        :param bool chdir: temporarily change directory in Bmad process
+        """
+        if chdir:
+            dirname, basename = os.path.split(filename)
+            with self.chdir(dirname):
+                self.command('read', 'lattice', basename)
+        else:
+            self.command('read', 'lattice', filename)
+
+    # Various, very specialized functions for interacting with Tao. Use only
+    # if you exactly what you're doing:
+
+    def update(self):
+        """Recompute curves in tao."""
+        self.set('global', lattice_calc_on='T')
+        self.set('global', lattice_calc_on='F')
+
+    def plots(self):
+        """Return names of available plots."""
+        return self.get_list('plot_list', 't')  # t = templates
+
+    def valid_graphs(self):
+        return [
+            (graph_path, {'plot': plot_info,
+                          'graph': graph_info})
+            for plot_name  in self.plots()
+            for plot_info  in [self.properties('plot1', plot_name)]
+            for graph_name in plot_info.get('graph', [])
+            for graph_path in [plot_name + '.' + graph_name]
+            for graph_info in [self.properties('plot_graph', graph_path)]
+            if graph_info.get('curve', [])
+            # if  graph_info.get('valid')
+        ]
 
     def curve_data(self, name):
         """Get a numpy array of (x,y) value pairs for the specified curve."""
