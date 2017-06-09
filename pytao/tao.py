@@ -21,6 +21,7 @@ from __future__ import unicode_literals
 import os
 import re
 import sys
+import logging
 from collections import namedtuple
 
 # dictionary type that preserves insertion order if not deleting an element.
@@ -31,7 +32,6 @@ else:
     from collections import OrderedDict
 
 import numpy as np
-
 
 from minrpc.util import ChangeDirectory
 from minrpc.client import Client, RemoteProcessCrashed, RemoteProcessClosed
@@ -407,8 +407,8 @@ def _convert_arrays(items):
             if len(l) == 1:
                 i0[name] = int(index)
             elif int(index) != len(l):
-                raise ValueError(
-                    "Inconsistent array: Got index {}, expected {}.\n"
+                logging.getLogger(__name__).warn(
+                    "Inconsistent array order: Got index {}, expected {}.\n"
                     "Please report this at https://github.com/hibtc/pytao/issues."
                     .format(index, len(l)))
         else:
@@ -417,7 +417,7 @@ def _convert_arrays(items):
         count = int(result.pop('num_'+name+'s', 0))
         # consistency check:
         if count != len(result[name]):
-            raise ValueError(
+            logging.getLogger(__name__).warn(
                 "Inconsistent array length: adverised as {}, got only {} items.\n"
                 "Please report this at https://github.com/hibtc/pytao/issues."
                 .format(count, len(result[name])))
