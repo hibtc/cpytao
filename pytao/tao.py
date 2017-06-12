@@ -55,6 +55,28 @@ PARAM_PLACE = {
 Parameter = namedtuple('Parameter', ['name', 'value', 'vary'])
 
 
+# TODO: close command log when Tao process is stopped
+class CommandLog(object):
+
+    """Log command history to a text file."""
+
+    @classmethod
+    def create(cls, filename, prefix='', suffix='\n'):
+        """Create CommandLog from filename (overwrite/create)."""
+        return cls(open(filename, 'wt'), prefix=prefix, suffix=suffix)
+
+    def __init__(self, file, prefix='', suffix='\n'):
+        """Create CommandLog from file instance."""
+        self._file = file
+        self._prefix = prefix
+        self._suffix = suffix
+
+    def __call__(self, command):
+        """Log a single history line and flush to file immediately."""
+        self._file.write(self._prefix + command + self._suffix)
+        self._file.flush()
+
+
 def format_val(value):
     if isinstance(value, float):
         return format(value, '.15e')
@@ -101,6 +123,13 @@ class Tao(object):
             >>> tao = Tao("-lat", "girder.lat")
         """
         self.debug = Popen_args.pop('debug', False)
+        command_log = Popen_args.pop('command_log', None)
+        if command_log:
+            self.command_log = CommandLog.create(command_log)
+        elif self.debug:
+            self.command_log = CommandLog(sys.stdout)
+        else:
+            self.command_log = None
         # stdin=None leads to an error on windows when STDIN is broken.
         # Therefore, we need set stdin=os.devnull by passing stdin=False:
         Popen_args.setdefault('stdin', False)
@@ -133,15 +162,15 @@ class Tao(object):
             >>> tao.command("set element {} {} = {}".format("bb", "k1", 1))
             >>> tao.command("set", "element", "bb", "k1", "=", 1)
         """
-        if self.debug:
-            print("command: " + join_args(command))
-        self.pipe.command(join_args(command))
+        cmd = join_args(command)
+        self._log_command(cmd, "command")
+        self.pipe.command(cmd)
 
     def capture(self, *command):
         """Send a command to Tao and returns the output string."""
-        if self.debug:
-            print("capture: " + join_args(command))
-        return self.pipe.capture(join_args(command))
+        cmd = join_args(command)
+        self._log_command(cmd, "capture")
+        return self.pipe.capture(cmd)
 
     def python(self, *command):
         """
@@ -330,6 +359,10 @@ class Tao(object):
         self.change(PARAM_PLACE[kind], **kwargs)
 
     # internal only, do not use:
+
+    def _log_command(self, command, context):
+        if self.command_log:
+            self.command_log("{}: {}".format(context, command))
 
     def _parse_dict(self, data):
         """
