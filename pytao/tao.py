@@ -362,7 +362,9 @@ class Tao(object):
 
     def _log_command(self, command, context):
         if self.command_log:
-            self.command_log("{}: {}".format(context, command))
+            self.command_log(command)
+        if self.debug:
+            print("{}: {}".format(context, command))
 
     def _parse_dict(self, data):
         """
