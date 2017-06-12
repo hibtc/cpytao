@@ -124,12 +124,7 @@ class Tao(object):
         """
         self.debug = Popen_args.pop('debug', False)
         command_log = Popen_args.pop('command_log', None)
-        if command_log:
-            self.command_log = CommandLog.create(command_log)
-        elif self.debug:
-            self.command_log = CommandLog(sys.stdout)
-        else:
-            self.command_log = None
+        self.command_log = command_log and CommandLog.create(command_log)
         # stdin=None leads to an error on windows when STDIN is broken.
         # Therefore, we need set stdin=os.devnull by passing stdin=False:
         Popen_args.setdefault('stdin', False)
@@ -163,13 +158,13 @@ class Tao(object):
             >>> tao.command("set", "element", "bb", "k1", "=", 1)
         """
         cmd = join_args(command)
-        self._log_command(cmd, "command")
+        self._log_command(cmd)
         self.pipe.command(cmd)
 
     def capture(self, *command):
         """Send a command to Tao and returns the output string."""
         cmd = join_args(command)
-        self._log_command(cmd, "capture")
+        self._log_command(cmd)
         return self.pipe.capture(cmd)
 
     def python(self, *command):
@@ -360,11 +355,11 @@ class Tao(object):
 
     # internal only, do not use:
 
-    def _log_command(self, command, context):
+    def _log_command(self, command):
         if self.command_log:
             self.command_log(command)
         if self.debug:
-            print("{}: {}".format(context, command))
+            print("tao: " + command)
 
     def _parse_dict(self, data):
         """
