@@ -456,7 +456,7 @@ def _convert_arrays(items):
         # consistency check:
         if count != len(result[name]):
             logging.getLogger(__name__).warn(
-                "Inconsistent array length: adverised as {}, got only {} items.\n"
+                "Inconsistent array length: advertised as {}, got only {} items.\n"
                 "Please report this at https://github.com/hibtc/pytao/issues."
                 .format(count, len(result[name])))
     return result
