@@ -446,9 +446,10 @@ def _convert_arrays(items):
                 i0[name] = int(index)
             elif int(index) != len(l):
                 logging.getLogger(__name__).warn(
-                    "Inconsistent array order: Got index {}, expected {}.\n"
-                    "Please report this at https://github.com/hibtc/pytao/issues."
-                    .format(index, len(l)))
+                    "Inconsistent array order for array: {!r}\n"
+                    "    Got index {}, expected {}.\n"
+                    "    Please report this at https://github.com/hibtc/pytao/issues."
+                    .format(name, index, len(l)))
         else:
             result[key] = val
     for name in arrays:
@@ -456,9 +457,10 @@ def _convert_arrays(items):
         # consistency check:
         if count != len(result[name]):
             logging.getLogger(__name__).warn(
-                "Inconsistent array length: advertised as {}, got only {} items.\n"
-                "Please report this at https://github.com/hibtc/pytao/issues."
-                .format(count, len(result[name])))
+                "Inconsistent array length for array: {!r}\n"
+                "    Length advertised as {}, got only {} items.\n"
+                "    Please report this at https://github.com/hibtc/pytao/issues."
+                .format(name, count, len(result[name])))
     return result
 
 
