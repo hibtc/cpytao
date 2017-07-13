@@ -488,3 +488,15 @@ def _parse_curve(data):
 def _rstrip(tup):
     """Strip a trailing empty string from the tuple."""
     return tup[:-1] if tup and tup[-1] == '' else tup
+
+
+if __name__ == '__main__':
+    if sys.argv[1] == '--pipe':
+        from pytao import tao_pipe
+        tao_pipe.set_init_args(join_args(sys.argv[2:]))
+        for line in sys.stdin:
+            tao_pipe.command(line)
+    else:
+        tao = Tao(*sys.argv[1:])
+        for line in sys.stdin:
+            tao.command(line)
