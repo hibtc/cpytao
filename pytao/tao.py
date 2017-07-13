@@ -353,9 +353,17 @@ class Tao(object):
     def set_param(self, kind, **kwargs):
         self.change(PARAM_PLACE[kind], **kwargs)
 
+    def __bool__(self):
+        """Check if MAD-X is up and running."""
+        return bool(self.pipe)
+
+    __nonzero__ = __bool__      # alias for python2 compatibility
+
     # internal only, do not use:
 
     def _log_command(self, command):
+        if not self:
+            return
         if self.command_log:
             self.command_log(command)
         if self.debug:
