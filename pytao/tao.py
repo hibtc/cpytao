@@ -36,6 +36,11 @@ import numpy as np
 from minrpc.util import ChangeDirectory
 from minrpc.client import Client, RemoteProcessCrashed, RemoteProcessClosed
 
+try:
+    basestring
+except NameError:
+    basestring = str
+
 
 __all__ = [
     'Tao',
@@ -124,7 +129,9 @@ class Tao(object):
         """
         self.debug = Popen_args.pop('debug', False)
         command_log = Popen_args.pop('command_log', None)
-        self.command_log = command_log and CommandLog.create(command_log)
+        if isinstance(command_log, basestring):
+            command_log = CommandLog.create(command_log)
+        self.command_log = command_log
         # stdin=None leads to an error on windows when STDIN is broken.
         # Therefore, we need set stdin=os.devnull by passing stdin=False:
         Popen_args.setdefault('stdin', False)
