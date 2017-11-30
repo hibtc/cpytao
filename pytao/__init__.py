@@ -48,4 +48,4 @@ __classifiers__ = [
 
 def get_copyright_notice():
     from pkg_resources import resource_string
-    return resource_string('madqt', 'COPYING.txt')
+    return resource_string('madqt', 'COPYING.txt').decode('utf-8')
