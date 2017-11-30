@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 __title__ = 'pytao'
-__version__ = '0.0.0'
+__version__ = '0.0.1'
 
 __summary__ = 'Python binding to tao shared object'
 __uri__ = 'https://github.com/hibtc/pytao'
