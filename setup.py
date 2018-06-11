@@ -110,7 +110,7 @@ def get_setup_args(argv):
         ]),
         install_requires=[
             'setuptools',
-            'minrpc',
+            'minrpc==0.0.7',
         ],
         package_data={
             'pytao': [

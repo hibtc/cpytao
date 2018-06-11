@@ -138,7 +138,7 @@ class Tao(object):
         Popen_args.setdefault('bufsize', 0)
         self._service, self._process = \
             Client.spawn_subprocess(**Popen_args)
-        self.pipe = self._service.modules['pytao.tao_pipe']
+        self.pipe = self._service.get_module('pytao.tao_pipe')
         self.pipe.set_init_args(join_args(initargs))
         self.set('global', lattice_calc_on='F')
         self.command('place * none')
