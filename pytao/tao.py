@@ -390,9 +390,9 @@ class Tao(object):
         if kind == 'STR':
             value = fields[3]
         elif kind == 'INT':
-            value = int(fields[3])
+            value = self._parse(int, fields[3], fields)
         elif kind == 'REAL':
-            value = float(fields[3])
+            value = self._parse(float, fields[3], fields)
         elif kind == 'LOGIC':
             value = fields[3] == 'T'
         elif kind == 'ENUM':
@@ -400,6 +400,12 @@ class Tao(object):
         else:
             value = fields[1]
         return name.lower(), value
+
+    def _parse(self, dtype, value, fields):
+        try:
+            return dtype(value)
+        except ValueError:
+            raise ValueError("Cannot parse field {}: {!r}")
 
     def _create_enum_value(self, name, value):
         return value
